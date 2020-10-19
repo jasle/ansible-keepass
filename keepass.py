@@ -10,7 +10,7 @@ DOCUMENTATION = '''
                 short_description: get data from keepass file
                 description:
                   - This lookup returns the contents from a keepass file on the ansible controller.
-                version_added: '0.1'
+                version_added: '2.10.2'
                 author: jasle (@jasle)
                 options:
                   _terms:
