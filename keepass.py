@@ -21,6 +21,10 @@ DOCUMENTATION = '''
                     description: include password
                     type: bool
                     default: False
+                  regex:
+                    description: interpret _terms as regular expression
+                    type: bool
+                    default: False
                   kdbx_file:
                     description: path of KeePass file
                     type: str
@@ -79,10 +83,18 @@ class LookupModule(LookupBase):
 
         # search entries in keepass and add them to ret as dict
         for term in terms:
-            entry = self._keepass.find_entries(path=term)
-            if entry == None:
-                raise AnsibleLookupError('Could not find any matching entry')
-            ret.append(self._entry_to_dict(entry, include_password))
+            if regex == False:
+                entry = self._keepass.find_entries(path=term)
+                if entry == None:
+                    raise AnsibleLookupError('Could not find any matching entry')
+                ret.append(self._entry_to_dict(entry, include_password))
+            else:
+                group_path , entry_title = term.rsplit('/', 1)
+                groups = self._get_groups(group_path)
+                for group in groups:
+                    entries = self._keepass.find_entries(title=entry_title, group=group, regex=True)
+                    for entry in entries:
+                        ret.append(self._entry_to_dict(entry, include_password))
 
         return ret
 
@@ -106,4 +118,29 @@ class LookupModule(LookupBase):
         # converte all remaining attributes
         for attr in attributes:
             ret[attr] = str(getattr(entry, attr))
+        return ret
+
+    def _get_groups(self, path, parent_group=None):
+        ret = []
+
+        # set parent_group to root, if none other group passed
+        if parent_group == None:
+            parent_group = self._keepass.find_groups(path='/')
+
+        # split path in name and subgroups, if there is a subgroup, otherwise use path as name
+        if '/' in path:
+            name, subgroups = path.split('/', 1)
+        else:
+            name = path
+            subgroups = ""
+
+        # get groups from keepass
+        groups = self._keepass.find_groups(name=name, group=parent_group, recursive=False, regex=True)
+        ret.extend(groups)
+
+        # if there are subgroups add them recursively
+        if subgroups:
+            for group in groups:
+                ret.extend(self._get_groups(subgroups, parent_group=group))
+
         return ret
