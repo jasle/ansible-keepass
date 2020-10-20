@@ -16,7 +16,7 @@ DOCUMENTATION = '''
                   _terms:
                     description: path of KeePass entry
                     required: True
-                    type: str
+                    type: string
                   include_password:
                     description: include password
                     type: bool
@@ -27,16 +27,16 @@ DOCUMENTATION = '''
                     default: False
                   kdbx_file:
                     description: path of KeePass file
-                    type: str
+                    type: string
                     default: ~/Passwords.kdbx
-                    env:
-                      - name: KEEPASS_FILE
+                    vars:
+                      - name: kdbx_file
                   kdbx_password:
                     description: password for KeePass file
-                    type: str
+                    type: string
                     no_log: True
-                    env:
-                      - name: KEEPASS_PASSWORD
+                    vars:
+                      - name: kdbx_password
                 requirements:
                   - pykeepass
                 '''
