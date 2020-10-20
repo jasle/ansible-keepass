@@ -49,7 +49,8 @@ RETURN = '''
            elements: dictionary
          '''
 
-from ansible.errors import AnsiblePluginError, AnsibleAuthenticationFailure, AnsibleConnectionFailure
+from ansible.errors import AnsiblePluginError, AnsibleConnectionFailure, AnsibleLookupError
+from ansible.module_utils._text import to_native
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.display import Display
 
@@ -74,9 +75,7 @@ class LookupModule(LookupBase):
         # load keepass file
         try:
             self._keepass = PyKeePass(kdbx_file, password=kdbx_password)
-        except CredentialsError:
-            raise AnsibleAuthenticationFailure('Wrong pass for KeePass file')
-        except (HeaderChecksumError, PayloadChecksumError) as e:
+        except Exception as e:
             raise AnsibleConnectionFailure('Could not open KeePass file: %s' % to_native(e))
 
         ret = []
