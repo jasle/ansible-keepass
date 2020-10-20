@@ -89,8 +89,13 @@ class LookupModule(LookupBase):
                     raise AnsibleLookupError('Could not find any matching entry')
                 ret.append(self._entry_to_dict(entry, include_password))
             else:
-                group_path , entry_title = term.rsplit('/', 1)
-                groups = self._get_groups(group_path)
+                # need different handling for entries in root group
+                if '/' not in term:
+                    groups = [self._keepass.root_group]
+                    entry_title = term
+                else:
+                    group_path , entry_title = term.rsplit('/', 1) or ['/', term]
+                    groups = self._get_groups(group_path)
                 for group in groups:
                     entries = self._keepass.find_entries(title=entry_title, group=group, regex=True)
                     for entry in entries:
