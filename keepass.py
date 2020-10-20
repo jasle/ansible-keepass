@@ -53,6 +53,7 @@ from ansible.errors import AnsiblePluginError, AnsibleConnectionFailure, Ansible
 from ansible.module_utils._text import to_native
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.display import Display
+from re import compile as compile_re
 
 try:
     from pykeepass import PyKeePass
@@ -88,17 +89,12 @@ class LookupModule(LookupBase):
                     raise AnsibleLookupError('Could not find any matching entry')
                 ret.append(self._entry_to_dict(entry, include_password))
             else:
-                # need different handling for entries in root group
-                if '/' not in term:
-                    groups = [self._keepass.root_group]
-                    entry_title = term
-                else:
-                    group_path , entry_title = term.rsplit('/', 1) or ['/', term]
-                    groups = self._get_groups(group_path)
-                for group in groups:
-                    entries = self._keepass.find_entries(title=entry_title, group=group, regex=True)
-                    for entry in entries:
-                        ret.append(self._entry_to_dict(entry, include_password))
+                pattern = compile_re(term)
+                all_entries = self._keepass.entries
+                entries = [e for e in all_entries if pattern.fullmatch(e.path)]
+                if not entries:
+                    raise AnsibleLookupError('Could not find any matching entry')
+                ret.append([self._entry_to_dict(e, include_password) for e in entries])
 
         return ret
 
