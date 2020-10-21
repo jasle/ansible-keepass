@@ -95,7 +95,6 @@ class LookupModule(LookupBase):
                 if not entries:
                     raise AnsibleLookupError('Could not find any matching entry')
                 ret.append([self._entry_to_dict(e, include_password) for e in entries])
-
         return ret
 
     def _entry_to_dict(self, entry, include_password):
@@ -117,7 +116,10 @@ class LookupModule(LookupBase):
 
         # converte all remaining attributes
         for attr in attributes:
-            ret[attr] = str(getattr(entry, attr))
+            if type(getattr(entry, attr)) in [str, dict, bool, list]:
+                ret[attr] = getattr(entry, attr)
+            else:
+                ret[attr] = str(getattr(entry, attr) or '')
         return ret
 
     def _get_groups(self, path, parent_group=None):
@@ -132,7 +134,7 @@ class LookupModule(LookupBase):
             name, subgroups = path.split('/', 1)
         else:
             name = path
-            subgroups = ""
+            subgroups = ''
 
         # get groups from keepass
         groups = self._keepass.find_groups(name=name, group=parent_group, recursive=False, regex=True)
